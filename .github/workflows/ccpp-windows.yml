@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C/C++ CI Win
 
 on: [push]
 
@@ -8,39 +8,135 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - name: Check out repository
-      uses: actions/checkout@v2
-      with:
-        depth: 1
-        submodules: 'recursive'
-    - name: Run Cppcheck
-      uses: Bedzior/run-cppcheck@master
-      with:
-        enabled checks: all
-        enable inconclusive: true
-        generate report: true
-    - name: Upload report
-      uses: actions/upload-artifact@v1
-      with:
-        name: report
-        path: output
-    - name: mkdir
-      run: |
-        mkdir build
-    - name: cmake
-      run: | 
-        cd build
-        cmake ..
-    - name: make -j4
-      run: |
-        cd build
-        make -j4
-    - name: find & copy binaries
-      run: |
-        mkdir artifacts
-        cp --parents build/crypto/fift build/crypto/adjust-block build/crypto/dump-block build/crypto/tlbc build/crypto/func build/crypto/create-state build/validator-engine-console/validator-engine-console build/tonlib/tonlib-cli build/tonlib/libtonlibjson.so.0.5 build/tddb/io-bench build/http/http-proxy build/tdnet/udp_ping_pong build/tdnet/tcp_ping_pong build/rldp-http-proxy/rldp-http-proxy build/dht-server/dht-server build/lite-client/lite-client build/validator-engine/validator-engine build/utils/generate-random-id build/utils/pack-viewer build/utils/json2tlo build/adnl/adnl-proxy build/adnl/adnl-pong artifacts
-    - name: Upload artifacts
-      uses: actions/upload-artifact@master
-      with:
-        name: ton-binaries
-        path: artifacts
+      - uses: danmar/cppcheck@master
+
+      - name: Setup msbuild.exe
+        uses: microsoft/setup-msbuild@v1.0.2
+                  
+      - name: Install PCRE
+        run: |
+          curl -fsSL https://ftp.pcre.org/pub/pcre/pcre-%PCRE_VERSION%.zip -o pcre-%PCRE_VERSION%.zip
+          7z x pcre-%PCRE_VERSION%.zip
+          cd pcre-%PCRE_VERSION%
+          cmake . -G "Visual Studio 16 2019" -A x64
+          msbuild -m PCRE.sln /p:Configuration=Release /p:Platform=x64
+          dir
+          dir Release
+          dir x64
+          dir x64\Release
+          copy pcre.h ..\externals
+          copy Release\pcre.lib ..\externals\pcre64.lib
+        env:
+          # see https://www.pcre.org/original/changelog.txt
+          PCRE_VERSION: 8.44  
+
+      - name: Install Z3 library
+        run: |
+          curl -fsSL https://github.com/Z3Prover/z3/releases/download/z3-%Z3_VERSION%/z3-%Z3_VERSION%-x64-win.zip -o z3-%Z3_VERSION%-win.zip
+          7z x z3-%Z3_VERSION%-win.zip -oexternals -r -y
+          move externals\z3-%Z3_VERSION%-x64-win externals\z3
+        env:
+          # see https://github.com/Z3Prover/z3/releases:  
+          Z3_VERSION: 4.8.10
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          modules: 'qtcharts'
+          mirror: 'http://mirrors.ocf.berkeley.edu/qt/'
+
+      - name: Build GUI x64 release
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat" 
+          cd gui
+          qmake HAVE_QCHART=yes
+          nmake release
+      
+      - name: Deploy GUI
+        run: |
+          windeployqt Build\gui
+          del Build\gui\cppcheck-gui.ilk
+          del Build\gui\cppcheck-gui.pdb
+          
+      - name: Build CLI x64 debug configuration using MSBuild
+        run: msbuild -m cppcheck.sln /p:Configuration=Debug-PCRE /p:Platform=x64
+
+      - name: Run Debug test
+        run: .\bin\debug\testrunner.exe
+
+      - name: Build x64 release configuration using MSBuild
+        run: msbuild -m cppcheck.sln /p:Configuration=Release-PCRE /p:Platform=x64
+
+      - name: Run Release test
+        run: .\bin\testrunner.exe
+ 
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_gui
+          path: Build\gui
+          
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_gui
+          path: ./**/cfg/*.cfg
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_gui
+          path: ./**/platforms/*.xml  
+          
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_gui
+          path: externals\z3\bin\*.dll
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_cli
+          path: ./bin/cppcheck.exe
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_cli
+          path: ./bin/cppcheck-core.dll
+          
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_cli
+          path: externals\z3\bin\*.dll
+          
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_cli
+          path: ./**/cfg/*.cfg
+        
+      - uses: actions/upload-artifact@v2
+        with:
+          name: cppcheck_cli
+          path: ./**/platforms/*.xml
+        # newton checkout
+      - name: Check out newton repository
+        uses: actions/checkout@v2
+        with:
+          depth: 1
+          submodules: 'recursive'
+      - name: mkdir
+        run: |
+          mkdir build
+      - name: cmake
+        run: | 
+          cd build
+          cmake ..
+      - name: make -j4
+        run: |
+          cd build
+          make -j4
+      - name: find & copy binaries
+        run: |
+          mkdir artifacts
+          cp --parents build/crypto/fift build/crypto/adjust-block build/crypto/dump-block build/crypto/tlbc build/crypto/func build/crypto/create-state build/validator-engine-console/validator-engine-console build/tonlib/tonlib-cli build/tonlib/libtonlibjson.so.0.5 build/tddb/io-bench build/http/http-proxy build/tdnet/udp_ping_pong build/tdnet/tcp_ping_pong build/rldp-http-proxy/rldp-http-proxy build/dht-server/dht-server build/lite-client/lite-client build/validator-engine/validator-engine build/utils/generate-random-id build/utils/pack-viewer build/utils/json2tlo build/adnl/adnl-proxy build/adnl/adnl-pong artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: ton-binaries
+          path: artifacts
