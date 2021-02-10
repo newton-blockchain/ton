@@ -8,7 +8,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: danmar/cppcheck@master
+      - uses: danmar/cppcheck@main
 
       - name: Setup msbuild.exe
         uses: microsoft/setup-msbuild@v1.0.2
