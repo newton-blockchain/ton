@@ -19,7 +19,6 @@ jobs:
       - name: Check out current repository
         uses: actions/checkout@v2
         with:
-          depth: 1
           submodules: 'recursive'
         
       - name: Check out zlib repository
