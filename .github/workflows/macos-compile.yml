@@ -31,7 +31,7 @@ jobs:
     - name: Find & copy binaries
       run: |
         mkdir artifacts
-        cp --parents build/* artifacts
+        cp -R build/* artifacts
     - name: Upload artifacts
       uses: actions/upload-artifact@master
       with:
