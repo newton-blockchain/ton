@@ -23,12 +23,12 @@ jobs:
     - name: Build TON
       run: |
         rootPath=`pwd`
-        mkdir ton/build
-        cd ton/build
+        mkdir build
+        cd build
         cmake -DOPENSSL_FOUND=1 -DOPENSSL_INCLUDE_DIR=$rootPath/openssl_1_1_1/include -DOPENSSL_CRYPTO_LIBRARY=$rootPath/openssl_1_1_1/libcrypto.a -DCMAKE_OSX_DEPLOYMENT_TARGET:STRING=10.12 -DCMAKE_CXX_FLAGS="-stdlib=libc++" -DCMAKE_BUILD_TYPE=Release ..
         make -j4
         
-    - name: find & copy binaries
+    - name: Find & copy binaries
       run: |
         mkdir artifacts
         cp --parents build/crypto/fift build/crypto/adjust-block build/crypto/dump-block build/crypto/tlbc build/crypto/func build/crypto/create-state build/validator-engine-console/validator-engine-console build/tonlib/tonlib-cli build/tonlib/libtonlibjson.so.0.5 build/tddb/io-bench build/http/http-proxy build/tdnet/udp_ping_pong build/tdnet/tcp_ping_pong build/rldp-http-proxy/rldp-http-proxy build/dht-server/dht-server build/lite-client/lite-client build/validator-engine/validator-engine build/utils/generate-random-id build/utils/pack-viewer build/utils/json2tlo build/adnl/adnl-proxy build/adnl/adnl-pong artifacts
