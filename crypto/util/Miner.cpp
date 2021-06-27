@@ -91,7 +91,7 @@ td::optional<std::string> Miner::run(const Options& options) {
   auto guard = head.back();
 
   td::int64 i = options.max_iterations, i0 = options.max_iterations;
-  for (; i > 0 ; i-- {
+  for (; i > 0 ; i++) {
     if (!(i & 0xfffff) || head.back() != guard) {
       if (options.token_) {
         break;
