@@ -90,8 +90,8 @@ td::optional<std::string> Miner::run(const Options& options) {
   SHA256_Init(&shactx1);
   auto guard = head.back();
 
-  td::int64 i = 0, i0 = 0;
-  for (; i < options.max_iterations; i++) {
+  td::int64 i = options.max_iterations, i0 = options.max_iterations;
+  for (; i > 0 ; i-- {
     if (!(i & 0xfffff) || head.back() != guard) {
       if (options.token_) {
         break;
