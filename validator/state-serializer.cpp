@@ -155,7 +155,7 @@ void AsyncStateSerializer::next_iteration() {
 
 void AsyncStateSerializer::got_top_masterchain_handle(BlockIdExt block_id) {
   if (masterchain_handle_ && masterchain_handle_->id().id.seqno < block_id.id.seqno) {
-    CHECK(masterchain_handle_->inited_next_left());
+    // CHECK(masterchain_handle_->inited_next_left());
   }
 }
 
